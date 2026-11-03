@@ -14,9 +14,14 @@
   </div>
 
   <div class="lab-results">
-    <div class="results-top"><div><span class="panel-index">02 / OBSERVE</span><h2>The network learns</h2></div><span class="training-state" id="training-state"><i></i> Ready to train</span></div>
-    <div class="chart-panel"><div class="chart-heading"><div><h3>Target vs prediction</h3><p>Watch the coral line move toward the dark curve.</p></div><div class="chart-legend"><span><i class="legend-target"></i> Target</span><span><i class="legend-learned"></i> Prediction</span></div></div><svg id="curve-chart" viewBox="0 0 640 310" role="img" aria-label="Target function and neural network prediction chart" preserveAspectRatio="none"><g class="chart-grid"><path d="M48 30H620M48 88H620M48 146H620M48 204H620M48 262H620M48 30V262M191 30V262M334 30V262M477 30V262M620 30V262" /></g><path id="target-path" class="target-path" d="" /><path id="prediction-path" class="prediction-path" d="" /><text id="chart-ymax" x="8" y="34"></text><text id="chart-ymin" x="8" y="266"></text><text id="chart-xmin" x="45" y="294"></text><text id="chart-xmax" x="600" y="294"></text></svg><p class="chart-caption" id="chart-caption" aria-live="polite">Set your experiment, then press Train network.</p></div>
-    <div class="results-bottom"><div class="network-panel"><div class="mini-heading"><h3>Network anatomy</h3><span id="architecture-label">1 → 8 → 8 → 1</span></div><svg id="network-graph" viewBox="0 0 340 180" role="img" aria-label="Neural network layer diagram"></svg><p>Lines represent weighted connections; color indicates their sign.</p></div><div class="loss-panel"><div class="mini-heading"><h3>Training loss</h3><span>MEAN SQUARED ERROR</span></div><strong id="loss-number">—</strong><svg id="loss-chart" viewBox="0 0 240 80" role="img" aria-label="Training loss over time"><path id="loss-path" d="" /></svg><div class="loss-footer"><span id="epoch-count">Step 0 / 400</span><span id="loss-trend">Waiting to start</span></div></div></div>
+    <div class="results-top"><div><span class="panel-index">02 / WEIGHTS IN MOTION</span><h2>Watch the weights change</h2></div><span class="training-state" id="training-state"><i></i> Ready to train</span></div>
+    <div class="weight-stage">
+      <div class="weight-stage-head"><div><h3>Every connection has a weight</h3><p>Click a neuron to inspect its incoming weights. During training, the lines and numbers update together.</p></div><span id="architecture-label">1 → 8 → 8 → 1</span></div>
+      <svg id="network-graph" viewBox="0 0 640 320" role="group" aria-label="Neural network with selectable neurons and changing weighted connections"></svg>
+      <div class="weight-stage-footer"><span><i class="weight-positive"></i> positive weight</span><span><i class="weight-negative"></i> negative weight</span><span id="weight-step">Step 0 of 400</span><span id="parameter-count">— parameters</span></div>
+    </div>
+    <div class="weight-inspector"><div class="inspector-heading"><div><span class="panel-index">SELECTED NEURON</span><h3 id="selected-neuron">Output neuron</h3></div><p id="update-summary" aria-live="polite">Press Train to see each update.</p></div><div class="weight-list" id="weight-list" aria-label="Selected neuron's incoming weights"></div></div>
+    <div class="results-bottom"><div class="chart-panel"><div class="chart-heading"><div><h3>What the network predicts</h3><p>The curve changes as a result of those weight updates.</p></div><div class="chart-legend"><span><i class="legend-target"></i> Target</span><span><i class="legend-learned"></i> Prediction</span></div></div><svg id="curve-chart" viewBox="0 0 640 310" role="img" aria-label="Target function and neural network prediction chart" preserveAspectRatio="none"><g class="chart-grid"><path d="M48 30H620M48 88H620M48 146H620M48 204H620M48 262H620M48 30V262M191 30V262M334 30V262M477 30V262M620 30V262" /></g><path id="target-path" class="target-path" d="" /><path id="prediction-path" class="prediction-path" d="" /><text id="chart-ymax" x="8" y="34"></text><text id="chart-ymin" x="8" y="266"></text><text id="chart-xmin" x="45" y="294"></text><text id="chart-xmax" x="600" y="294"></text></svg><p class="chart-caption" id="chart-caption" aria-live="polite">The target and the network's initial guess.</p></div><div class="loss-panel"><div class="mini-heading"><h3>Training loss</h3><span>MEAN SQUARED ERROR</span></div><strong id="loss-number">—</strong><svg id="loss-chart" viewBox="0 0 240 80" role="img" aria-label="Training loss over time"><path id="loss-path" d="" /></svg><div class="loss-footer"><span id="epoch-count">Step 0 / 400</span><span id="loss-trend">Waiting to start</span></div></div></div>
   </div>
 </div>
 
@@ -37,6 +42,8 @@
   let step = 0;
   let running = false;
   let runId = 0;
+  let selected = { layer: 2, neuron: 0 };
+  let lastDeltas = new Map();
 
   function updateLabels() {
     $('#layers-value').textContent = controls.layers.value;
@@ -44,6 +51,7 @@
     $('#rate-value').textContent = Number(controls.rate.value).toFixed(2);
     $('#epochs-value').textContent = controls.epochs.value;
     $('#epoch-count').textContent = `Step ${step} / ${controls.epochs.value}`;
+    $('#weight-step').textContent = `Step ${step} of ${controls.epochs.value}`;
   }
 
   function settings() {
@@ -101,31 +109,109 @@
 
   function drawNetwork(config) {
     const svg = $('#network-graph');
-    svg.replaceChildren();
     const sizes = [1, ...Array(config.layers).fill(config.neurons), 1];
+    const signature = sizes.join('-');
     const positions = sizes.map((size, layer) => Array.from({ length: size }, (_, index) => ({
-      x: 22 + layer * 296 / (sizes.length - 1),
-      y: 90 + (index - (size - 1) / 2) * Math.min(24, 136 / Math.max(1, size - 1)),
+      x: 48 + layer * 544 / (sizes.length - 1),
+      y: 164 + (index - (size - 1) / 2) * Math.min(34, 232 / Math.max(1, size - 1)),
     })));
-    for (let layer = 1; layer < positions.length; layer++) {
-      positions[layer - 1].forEach((from, source) => positions[layer].forEach((to, target) => {
-        const line = document.createElementNS(svgNS, 'line');
-        line.setAttribute('x1', String(from.x)); line.setAttribute('y1', String(from.y));
-        line.setAttribute('x2', String(to.x)); line.setAttribute('y2', String(to.y));
-        const weight = model?.layers[layer - 1][target].weights[source].data ?? 0;
-        line.setAttribute('stroke', weight >= 0 ? '#d27453' : '#668586');
-        line.setAttribute('stroke-opacity', String(model ? Math.min(0.58, 0.14 + Math.abs(weight) * 0.24) : 0.18));
-        line.setAttribute('stroke-width', String(Math.min(2.5, 0.65 + Math.abs(weight) * 0.65)));
-        svg.append(line);
+    if (svg.dataset.signature !== signature) {
+      svg.replaceChildren();
+      svg.dataset.signature = signature;
+      positions.forEach((layer, index) => {
+        const label = document.createElementNS(svgNS, 'text');
+        label.setAttribute('x', String(layer[0].x));
+        label.setAttribute('y', '24');
+        label.setAttribute('text-anchor', 'middle');
+        label.setAttribute('class', 'network-layer-label');
+        label.textContent = index === 0 ? 'INPUT' : index === positions.length - 1 ? 'OUTPUT' : `HIDDEN ${index}`;
+        svg.append(label);
+      });
+      for (let layer = 1; layer < positions.length; layer++) {
+        positions[layer - 1].forEach((from, source) => positions[layer].forEach((to, target) => {
+          const line = document.createElementNS(svgNS, 'line');
+          line.setAttribute('x1', String(from.x)); line.setAttribute('y1', String(from.y));
+          line.setAttribute('x2', String(to.x)); line.setAttribute('y2', String(to.y));
+          line.dataset.layer = String(layer - 1);
+          line.dataset.source = String(source);
+          line.dataset.target = String(target);
+          line.setAttribute('class', 'network-edge');
+          svg.append(line);
+        }));
+      }
+      positions.forEach((layer, layerIndex) => layer.forEach(({ x, y }, neuronIndex) => {
+        const circle = document.createElementNS(svgNS, 'circle');
+        circle.setAttribute('cx', String(x)); circle.setAttribute('cy', String(y));
+        circle.setAttribute('r', layerIndex === positions.length - 1 ? '11' : '8');
+        circle.setAttribute('class', 'network-node');
+        if (layerIndex > 0) {
+          circle.dataset.layer = String(layerIndex - 1);
+          circle.dataset.neuron = String(neuronIndex);
+          circle.setAttribute('role', 'button');
+          circle.setAttribute('tabindex', '0');
+          circle.setAttribute('aria-label', `Inspect ${layerIndex === positions.length - 1 ? 'output' : `hidden layer ${layerIndex}`} neuron ${neuronIndex + 1}`);
+        }
+        svg.append(circle);
       }));
     }
-    positions.forEach((layer) => layer.forEach(({ x, y }) => {
-      const circle = document.createElementNS(svgNS, 'circle');
-      circle.setAttribute('cx', String(x)); circle.setAttribute('cy', String(y)); circle.setAttribute('r', '5.5');
-      circle.setAttribute('fill', '#f8f5ee'); circle.setAttribute('stroke', '#234342'); circle.setAttribute('stroke-width', '1.5');
-      svg.append(circle);
-    }));
+    svg.querySelectorAll('.network-edge').forEach((line) => {
+      const layer = Number(line.dataset.layer);
+      const target = Number(line.dataset.target);
+      const source = Number(line.dataset.source);
+      const weight = model.layers[layer][target].weights[source].data;
+      const focused = selected.layer === layer && selected.neuron === target;
+      line.setAttribute('stroke', weight >= 0 ? '#d27453' : '#5f8585');
+      line.setAttribute('stroke-opacity', String(focused ? Math.min(1, 0.4 + Math.abs(weight) * 0.55) : Math.min(0.32, 0.09 + Math.abs(weight) * 0.13)));
+      line.setAttribute('stroke-width', String(focused ? Math.min(6, 1.5 + Math.abs(weight) * 2.8) : Math.min(2, 0.5 + Math.abs(weight) * 0.45)));
+    });
+    svg.querySelectorAll('.network-node[data-layer]').forEach((circle) => {
+      const focused = selected.layer === Number(circle.dataset.layer) && selected.neuron === Number(circle.dataset.neuron);
+      circle.classList.toggle('is-selected', focused);
+      circle.setAttribute('aria-pressed', String(focused));
+    });
     $('#architecture-label').textContent = sizes.join(' → ');
+    $('#parameter-count').textContent = `${model.parameters().length} trainable parameters`;
+  }
+
+  function drawInspector() {
+    const neuron = model.layers[selected.layer][selected.neuron];
+    const output = selected.layer === model.layers.length - 1;
+    $('#selected-neuron').textContent = output ? 'Output neuron' : `Hidden layer ${selected.layer + 1} · neuron ${selected.neuron + 1}`;
+    const parameters = [...neuron.weights, neuron.bias];
+    const list = $('#weight-list');
+    const key = `${selected.layer}-${selected.neuron}`;
+    if (list.dataset.key !== key || list.children.length !== parameters.length) {
+      list.replaceChildren();
+      list.dataset.key = key;
+      parameters.forEach((_, index) => {
+        const row = document.createElement('div');
+        row.className = 'weight-row';
+        const name = document.createElement('span');
+        name.className = 'weight-name';
+        name.textContent = index === neuron.weights.length ? 'bias' : `w${index + 1}`;
+        const value = document.createElement('strong');
+        value.className = 'weight-value';
+        const delta = document.createElement('span');
+        delta.className = 'weight-delta';
+        const track = document.createElement('div');
+        track.className = 'weight-track';
+        const bar = document.createElement('span');
+        track.append(bar);
+        row.append(name, value, delta, track);
+        list.append(row);
+      });
+    }
+    parameters.forEach((parameter, index) => {
+      const row = list.children[index];
+      const delta = lastDeltas.get(parameter) ?? 0;
+      row.classList.toggle('is-positive', parameter.data >= 0);
+      row.classList.toggle('is-negative', parameter.data < 0);
+      row.querySelector('.weight-value').textContent = `${parameter.data >= 0 ? '+' : ''}${parameter.data.toFixed(4)}`;
+      row.querySelector('.weight-delta').textContent = step ? `Δ ${delta >= 0 ? '+' : ''}${delta.toFixed(6)}` : 'initial';
+      row.querySelector('.weight-track span').style.width = `${Math.min(100, Math.abs(parameter.data) * 42)}%`;
+    });
+    const moved = [...lastDeltas.values()].filter((delta) => Math.abs(delta) > 1e-7).length;
+    $('#update-summary').textContent = step ? `${moved} of ${model.parameters().length} parameters changed in the last frame` : 'Press Train to see each update.';
   }
 
   function drawLoss() {
@@ -142,25 +228,29 @@
     const config = settings();
     samples = config.training;
     model = new MLP(1, [...Array(config.layers).fill(config.neurons), 1]);
+    selected = { layer: model.layers.length - 1, neuron: 0 };
+    lastDeltas = new Map();
     history = [];
     step = 0;
     $('#lab-error').hidden = true;
     $('#loss-number').textContent = '—';
     $('#loss-trend').textContent = 'Waiting to start';
-    $('#chart-caption').textContent = 'The pale curve is the target. The coral curve is the network’s current guess.';
-    drawCurves(config); drawNetwork(config); drawLoss(); updateLabels();
+    $('#chart-caption').textContent = 'The dark curve is the target. The coral curve is the network’s initial guess.';
+    drawCurves(config); drawNetwork(config); drawInspector(); drawLoss(); updateLabels();
     return config;
   }
 
   function animate(config, token) {
     if (!running || token !== runId) return;
     try {
+      const before = new Map(model.parameters().map((parameter) => [parameter, parameter.data]));
       for (let batch = 0; batch < 3 && step < config.epochs; batch++) {
         const loss = trainStep(model, samples, config.rate);
         history.push(loss);
         step++;
       }
-      drawCurves(config); drawNetwork(config); drawLoss(); updateLabels();
+      lastDeltas = new Map(model.parameters().map((parameter) => [parameter, parameter.data - (before.get(parameter) ?? parameter.data)]));
+      drawNetwork(config); drawInspector(); drawCurves(config); drawLoss(); updateLabels();
       $('#chart-caption').textContent = `Training step ${step} of ${config.epochs}. The prediction updates as the weights change.`;
       if (step < config.epochs) requestAnimationFrame(() => animate(config, token));
       else {
@@ -174,8 +264,8 @@
   $('#train-button').addEventListener('click', () => {
     if (running) { stop(); $('#training-state').innerHTML = '<i></i> Paused'; return; }
     try {
-      const config = step && model ? settings() : prepare();
-      if (step >= config.epochs) prepare();
+      let config = model && samples ? settings() : prepare();
+      if (step >= config.epochs) config = prepare();
       running = true;
       const token = ++runId;
       $('#train-button').textContent = 'Pause training';
@@ -185,27 +275,33 @@
     } catch (error) { showError(error); }
   });
   $('#reset-button').addEventListener('click', () => {
-    stop(); model = undefined; samples = undefined; history = []; step = 0;
-    $('#lab-error').hidden = true; $('#loss-number').textContent = '—'; $('#loss-trend').textContent = 'Waiting to start';
+    stop();
     $('#training-state').innerHTML = '<i></i> Ready to train';
-    $('#chart-caption').textContent = 'Set your experiment, then press Train network.';
-    $('#prediction-path').setAttribute('d', ''); $('#loss-path').setAttribute('d', '');
-    try { const config = settings(); drawCurves(config); drawNetwork(config); } catch (error) { showError(error); }
-    updateLabels();
+    try { prepare(); } catch (error) { showError(error); }
   });
   root.querySelectorAll('[data-preset]').forEach((button) => button.addEventListener('click', () => {
     controls.expression.value = button.getAttribute('data-preset') ?? '';
     $('#reset-button').click();
   }));
   Object.values(controls).forEach((input) => input.addEventListener('input', () => {
-    updateLabels();
     if (running) stop();
-    model = undefined; samples = undefined; step = 0; history = [];
-    $('#prediction-path').setAttribute('d', ''); $('#loss-path').setAttribute('d', '');
-    $('#loss-number').textContent = '—'; $('#loss-trend').textContent = 'Waiting to start';
     $('#training-state').innerHTML = '<i></i> Ready to train';
-    try { $('#lab-error').hidden = true; const config = settings(); drawCurves(config); drawNetwork(config); } catch (error) { showError(error); }
+    updateLabels();
+    try { prepare(); } catch (error) { showError(error); }
   }));
-  updateLabels();
-  try { const config = settings(); drawCurves(config); drawNetwork(config); } catch (error) { showError(error); }
+  function selectNeuron(circle) {
+    selected = { layer: Number(circle.dataset.layer), neuron: Number(circle.dataset.neuron) };
+    drawNetwork(settings());
+    drawInspector();
+  }
+  $('#network-graph').addEventListener('click', (event) => {
+    if (event.target instanceof SVGCircleElement && event.target.dataset.layer) selectNeuron(event.target);
+  });
+  $('#network-graph').addEventListener('keydown', (event) => {
+    if ((event.key === 'Enter' || event.key === ' ') && event.target instanceof SVGCircleElement && event.target.dataset.layer) {
+      event.preventDefault();
+      selectNeuron(event.target);
+    }
+  });
+  try { prepare(); } catch (error) { showError(error); }
 </script>

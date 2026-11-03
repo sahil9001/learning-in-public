@@ -187,7 +187,24 @@
     margin-top: 12px;
   }
   .chart-panel svg {
-    height: 260px;
+    height: 210px;
+  }
+  .weight-stage {
+    overflow-x: auto;
+  }
+  #network-graph {
+    min-width: 520px;
+    height: 280px;
+  }
+  .inspector-heading {
+    display: block;
+  }
+  .inspector-heading p {
+    text-align: left;
+    margin-top: 9px;
+  }
+  .weight-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
   .results-bottom {
     grid-template-columns: 1fr;

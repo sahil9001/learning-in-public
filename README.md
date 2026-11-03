@@ -32,7 +32,7 @@ Then write the note in Markdown. It appears automatically on the notes page and 
 
 ## Interactive lab
 
-Visitors can enter a safe arithmetic expression of `x`, adjust the number and size of hidden layers, select a learning rate and training steps, and watch a small autograd based MLP fit the curve. The computation runs entirely in the browser; no user expression is evaluated as JavaScript. The final layer is linear to fit targets outside the tanh range. Training samples are normalized internally and plotted in their original scale.
+Visitors can enter a safe arithmetic expression of `x`, adjust the number and size of hidden layers, select a learning rate and training steps, and watch a small autograd based MLP train. The main visual shows every weighted connection. Selecting a neuron reveals its incoming weights and their change in the latest animation frame; the curve and loss show the effect of training. The computation runs entirely in the browser; no user expression is evaluated as JavaScript. The final layer is linear to fit targets outside the tanh range. Training samples are normalized internally and plotted in their original scale.
 
 ## Publishing
 

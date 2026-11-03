@@ -49,3 +49,18 @@ test('training a small MLP reduces mean squared error', () => {
   for (let i = 0; i < 300; i++) last = trainStep(model, samples, 0.05);
   assert.ok(last < first * 0.6, `loss stayed at ${last} from ${first}`);
 });
+
+test('gradient descent changes neuron weights in the gradient direction', () => {
+  let seed = 7;
+  const random = () => { seed = (1664525 * seed + 1013904223) % 4294967296; return seed / 4294967296; };
+  const model = new MLP(1, [3, 1], random);
+  const samples = createTrainingSet(compileExpression('x^2'), -1, 1, 9);
+  const weights = model.parameters();
+  const before = weights.map(({ data }) => data);
+  trainStep(model, samples, 0.05);
+  assert.ok(weights.some((weight, index) => weight.data !== before[index]));
+  weights.forEach((weight, index) => {
+    const expected = before[index] - 0.05 * Math.max(-10, Math.min(10, weight.grad));
+    assert.ok(Math.abs(weight.data - expected) < 1e-10);
+  });
+});
