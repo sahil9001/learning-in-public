@@ -1,0 +1,32 @@
+---
+import '../styles/global.css';
+const { title = 'Sahil / Learning in public', description = 'A growing field journal of concepts, code, and experiments.' } = Astro.props;
+const base = `${import.meta.env.BASE_URL.replace(/\/$/, '')}/`;
+---
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content={description} />
+    <meta name="theme-color" content="#f7f5ef" />
+    <title>{title}</title>
+  </head>
+  <body>
+    <div class="site-shell">
+      <header class="site-header wrap">
+        <a class="brand" href={base} aria-label="Sahil, learning in public home"><span class="brand-mark">s/</span><span>Sahil <span class="brand-light">/ learning in public</span></span></a>
+        <nav aria-label="Main navigation">
+          <a href={`${base}notes/`}>Notes</a>
+          <a href={`${base}lab/`}>The lab <span aria-hidden="true">↗</span></a>
+          <a href="https://github.com/sahil9001/learning-in-public" target="_blank" rel="noopener noreferrer">GitHub <span aria-hidden="true">↗</span></a>
+        </nav>
+      </header>
+      <main><slot /></main>
+      <footer class="site-footer wrap">
+        <span>Made while learning. Built to keep learning.</span>
+        <div><a href={`${base}notes/`}>All notes</a><a href="https://github.com/sahil9001/learning-in-public" target="_blank" rel="noopener noreferrer">Source code ↗</a></div>
+      </footer>
+    </div>
+  </body>
+</html>

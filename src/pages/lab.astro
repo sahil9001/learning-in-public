@@ -1,0 +1,9 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import LearningLab from '../components/LearningLab.astro';
+---
+<BaseLayout title="Neural network lab / Sahil" description="Define a function and watch a tiny neural network learn it through backpropagation.">
+  <section class="lab-heading wrap"><div><p class="eyebrow"><span class="eyebrow-line"></span>Interactive lab / micrograd</p><h1>Make a network<br /><em>learn a curve.</em></h1></div><p>Inspired by my micrograd notebook: define a target function, build a tiny MLP, and watch gradient descent reshape its prediction in real time.</p></section>
+  <LearningLab />
+  <section class="lab-explainer wrap"><div><p class="section-kicker">Under the hood</p><h2>One step at a time.</h2></div><div class="explainer-steps"><div><span>01</span><h3>Sample the function</h3><p>Points along your curve become input and target pairs. The lab scales target values for stable training.</p></div><div><span>02</span><h3>Forward & backward</h3><p>Each neuron combines weights, inputs, and a bias. A small autograd graph carries gradients back through the layers.</p></div><div><span>03</span><h3>Update the weights</h3><p>Mean squared error measures the mismatch. Gradient descent nudges parameters, and the chart redraws after every batch.</p></div></div></section>
+</BaseLayout>

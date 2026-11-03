@@ -1,0 +1,211 @@
+<div class="lab-shell wrap" id="learning-lab">
+  <div class="lab-controls">
+    <div class="panel-heading"><span class="panel-index">01 / SETUP</span><h2>Design an experiment</h2><p>Start with the function from my notebook, or write your own using <code>x</code>.</p></div>
+    <div class="control-group"><label for="function-input">Target function <span>f(x) =</span></label><input id="function-input" type="text" value="3*x^2 - 4*x + 5" maxlength="120" spellcheck="false" autocomplete="off" aria-describedby="function-help" /><p class="control-help" id="function-help">Use +, −, *, /, ^, parentheses, sin, cos, tanh, exp, abs, or sqrt.</p></div>
+    <div class="preset-row" aria-label="Example functions"><span>TRY AN EXAMPLE</span><button type="button" data-preset="3*x^2 - 4*x + 5">Quadratic</button><button type="button" data-preset="sin(3*x)">Sine wave</button><button type="button" data-preset="x^3 - x">Cubic</button></div>
+    <div class="control-pair"><div class="control-group"><label for="min-input">x from</label><input id="min-input" type="number" value="-2" min="-5" max="4" step="0.5" /></div><div class="control-group"><label for="max-input">x to</label><input id="max-input" type="number" value="2" min="-4" max="5" step="0.5" /></div></div>
+    <div class="panel-divider"></div>
+    <div class="control-group"><label for="layers-input">Hidden layers <output id="layers-value">2</output></label><input id="layers-input" type="range" min="1" max="3" value="2" /></div>
+    <div class="control-group"><label for="neurons-input">Neurons per layer <output id="neurons-value">8</output></label><input id="neurons-input" type="range" min="2" max="12" value="8" /></div>
+    <div class="control-group"><label for="rate-input">Learning rate <output id="rate-value">0.05</output></label><input id="rate-input" type="range" min="0.01" max="0.20" step="0.01" value="0.05" /></div>
+    <div class="control-group"><label for="epochs-input">Training steps <output id="epochs-value">400</output></label><input id="epochs-input" type="range" min="100" max="1000" step="100" value="400" /></div>
+    <div class="control-actions"><button class="button-primary" id="train-button" type="button">Train network <span>↗</span></button><button class="button-secondary" id="reset-button" type="button">Reset</button></div>
+    <p class="lab-error" id="lab-error" role="alert" hidden></p>
+  </div>
+
+  <div class="lab-results">
+    <div class="results-top"><div><span class="panel-index">02 / OBSERVE</span><h2>The network learns</h2></div><span class="training-state" id="training-state"><i></i> Ready to train</span></div>
+    <div class="chart-panel"><div class="chart-heading"><div><h3>Target vs prediction</h3><p>Watch the coral line move toward the dark curve.</p></div><div class="chart-legend"><span><i class="legend-target"></i> Target</span><span><i class="legend-learned"></i> Prediction</span></div></div><svg id="curve-chart" viewBox="0 0 640 310" role="img" aria-label="Target function and neural network prediction chart" preserveAspectRatio="none"><g class="chart-grid"><path d="M48 30H620M48 88H620M48 146H620M48 204H620M48 262H620M48 30V262M191 30V262M334 30V262M477 30V262M620 30V262" /></g><path id="target-path" class="target-path" d="" /><path id="prediction-path" class="prediction-path" d="" /><text id="chart-ymax" x="8" y="34"></text><text id="chart-ymin" x="8" y="266"></text><text id="chart-xmin" x="45" y="294"></text><text id="chart-xmax" x="600" y="294"></text></svg><p class="chart-caption" id="chart-caption" aria-live="polite">Set your experiment, then press Train network.</p></div>
+    <div class="results-bottom"><div class="network-panel"><div class="mini-heading"><h3>Network anatomy</h3><span id="architecture-label">1 → 8 → 8 → 1</span></div><svg id="network-graph" viewBox="0 0 340 180" role="img" aria-label="Neural network layer diagram"></svg><p>Lines represent weighted connections; color indicates their sign.</p></div><div class="loss-panel"><div class="mini-heading"><h3>Training loss</h3><span>MEAN SQUARED ERROR</span></div><strong id="loss-number">—</strong><svg id="loss-chart" viewBox="0 0 240 80" role="img" aria-label="Training loss over time"><path id="loss-path" d="" /></svg><div class="loss-footer"><span id="epoch-count">Step 0 / 400</span><span id="loss-trend">Waiting to start</span></div></div></div>
+  </div>
+</div>
+
+<script>
+  import { compileExpression } from '../lib/expression.mjs';
+  import { MLP, createTrainingSet, trainStep } from '../lib/micrograd.mjs';
+
+  const root = document.querySelector('#learning-lab');
+  const $ = (selector) => root.querySelector(selector);
+  const svgNS = 'http://www.w3.org/2000/svg';
+  const controls = {
+    expression: $('#function-input'), min: $('#min-input'), max: $('#max-input'),
+    layers: $('#layers-input'), neurons: $('#neurons-input'), rate: $('#rate-input'), epochs: $('#epochs-input'),
+  };
+  let model;
+  let samples;
+  let history = [];
+  let step = 0;
+  let running = false;
+  let runId = 0;
+
+  function updateLabels() {
+    $('#layers-value').textContent = controls.layers.value;
+    $('#neurons-value').textContent = controls.neurons.value;
+    $('#rate-value').textContent = Number(controls.rate.value).toFixed(2);
+    $('#epochs-value').textContent = controls.epochs.value;
+    $('#epoch-count').textContent = `Step ${step} / ${controls.epochs.value}`;
+  }
+
+  function settings() {
+    const min = Number(controls.min.value);
+    const max = Number(controls.max.value);
+    if (!Number.isFinite(min) || !Number.isFinite(max) || min < -5 || max > 5 || max - min < 0.5) {
+      throw new Error('Choose an x range within −5 to 5, at least 0.5 wide.');
+    }
+    const fn = compileExpression(controls.expression.value);
+    const training = createTrainingSet(fn, min, max, 25);
+    const layers = Number(controls.layers.value);
+    const neurons = Number(controls.neurons.value);
+    return { min, max, fn, training, layers, neurons, epochs: Number(controls.epochs.value), rate: Number(controls.rate.value) };
+  }
+
+  function showError(error) {
+    const element = $('#lab-error');
+    element.textContent = error instanceof Error ? error.message : 'Something went wrong. Check the function and try again.';
+    element.hidden = false;
+  }
+
+  function stop() {
+    running = false;
+    runId++;
+    $('#train-button').innerHTML = 'Train network <span>↗</span>';
+    $('#training-state').classList.remove('is-training');
+  }
+
+  function pathFrom(points) {
+    return points.map(([x, y], index) => `${index ? 'L' : 'M'}${x.toFixed(2)} ${y.toFixed(2)}`).join(' ');
+  }
+
+  function drawCurves(config) {
+    const count = 81;
+    const values = Array.from({ length: count }, (_, index) => {
+      const x = config.min + (config.max - config.min) * index / (count - 1);
+      const target = config.fn(x);
+      const prediction = model ? model.predict(x).data * samples[0].scale + samples[0].center : null;
+      return { x, target, prediction };
+    });
+    const allY = values.flatMap(({ target, prediction }) => prediction === null ? [target] : [target, prediction]);
+    const low = Math.min(...allY);
+    const high = Math.max(...allY);
+    const margin = Math.max(0.5, (high - low) * 0.12);
+    const yMin = low - margin;
+    const yMax = high + margin;
+    const plot = (key) => pathFrom(values.map((value, index) => [48 + index * 572 / (count - 1), 262 - (value[key] - yMin) * 232 / (yMax - yMin)]));
+    $('#target-path').setAttribute('d', plot('target'));
+    $('#prediction-path').setAttribute('d', model ? plot('prediction') : '');
+    $('#chart-ymax').textContent = yMax.toFixed(1);
+    $('#chart-ymin').textContent = yMin.toFixed(1);
+    $('#chart-xmin').textContent = config.min.toFixed(1);
+    $('#chart-xmax').textContent = config.max.toFixed(1);
+  }
+
+  function drawNetwork(config) {
+    const svg = $('#network-graph');
+    svg.replaceChildren();
+    const sizes = [1, ...Array(config.layers).fill(config.neurons), 1];
+    const positions = sizes.map((size, layer) => Array.from({ length: size }, (_, index) => ({
+      x: 22 + layer * 296 / (sizes.length - 1),
+      y: 90 + (index - (size - 1) / 2) * Math.min(24, 136 / Math.max(1, size - 1)),
+    })));
+    for (let layer = 1; layer < positions.length; layer++) {
+      positions[layer - 1].forEach((from, source) => positions[layer].forEach((to, target) => {
+        const line = document.createElementNS(svgNS, 'line');
+        line.setAttribute('x1', String(from.x)); line.setAttribute('y1', String(from.y));
+        line.setAttribute('x2', String(to.x)); line.setAttribute('y2', String(to.y));
+        const weight = model?.layers[layer - 1][target].weights[source].data ?? 0;
+        line.setAttribute('stroke', weight >= 0 ? '#d27453' : '#668586');
+        line.setAttribute('stroke-opacity', String(model ? Math.min(0.58, 0.14 + Math.abs(weight) * 0.24) : 0.18));
+        line.setAttribute('stroke-width', String(Math.min(2.5, 0.65 + Math.abs(weight) * 0.65)));
+        svg.append(line);
+      }));
+    }
+    positions.forEach((layer) => layer.forEach(({ x, y }) => {
+      const circle = document.createElementNS(svgNS, 'circle');
+      circle.setAttribute('cx', String(x)); circle.setAttribute('cy', String(y)); circle.setAttribute('r', '5.5');
+      circle.setAttribute('fill', '#f8f5ee'); circle.setAttribute('stroke', '#234342'); circle.setAttribute('stroke-width', '1.5');
+      svg.append(circle);
+    }));
+    $('#architecture-label').textContent = sizes.join(' → ');
+  }
+
+  function drawLoss() {
+    if (history.length < 2) { $('#loss-path').setAttribute('d', ''); return; }
+    const max = Math.max(...history);
+    const min = Math.min(...history);
+    const span = Math.max(0.0001, max - min);
+    $('#loss-path').setAttribute('d', pathFrom(history.map((loss, index) => [4 + index * 232 / (history.length - 1), 74 - (loss - min) * 66 / span])));
+    $('#loss-number').textContent = history.at(-1).toFixed(4);
+    $('#loss-trend').textContent = history.at(-1) < history[0] ? '↓ Improving' : '↗ Not improving yet';
+  }
+
+  function prepare() {
+    const config = settings();
+    samples = config.training;
+    model = new MLP(1, [...Array(config.layers).fill(config.neurons), 1]);
+    history = [];
+    step = 0;
+    $('#lab-error').hidden = true;
+    $('#loss-number').textContent = '—';
+    $('#loss-trend').textContent = 'Waiting to start';
+    $('#chart-caption').textContent = 'The pale curve is the target. The coral curve is the network’s current guess.';
+    drawCurves(config); drawNetwork(config); drawLoss(); updateLabels();
+    return config;
+  }
+
+  function animate(config, token) {
+    if (!running || token !== runId) return;
+    try {
+      for (let batch = 0; batch < 3 && step < config.epochs; batch++) {
+        const loss = trainStep(model, samples, config.rate);
+        history.push(loss);
+        step++;
+      }
+      drawCurves(config); drawNetwork(config); drawLoss(); updateLabels();
+      $('#chart-caption').textContent = `Training step ${step} of ${config.epochs}. The prediction updates as the weights change.`;
+      if (step < config.epochs) requestAnimationFrame(() => animate(config, token));
+      else {
+        stop();
+        $('#training-state').innerHTML = '<i></i> Training complete';
+        $('#chart-caption').textContent = `Training complete after ${step} steps. Change a setting and try again.`;
+      }
+    } catch (error) { stop(); showError(error); }
+  }
+
+  $('#train-button').addEventListener('click', () => {
+    if (running) { stop(); $('#training-state').innerHTML = '<i></i> Paused'; return; }
+    try {
+      const config = step && model ? settings() : prepare();
+      if (step >= config.epochs) prepare();
+      running = true;
+      const token = ++runId;
+      $('#train-button').textContent = 'Pause training';
+      $('#training-state').innerHTML = '<i></i> Training live';
+      $('#training-state').classList.add('is-training');
+      requestAnimationFrame(() => animate(config, token));
+    } catch (error) { showError(error); }
+  });
+  $('#reset-button').addEventListener('click', () => {
+    stop(); model = undefined; samples = undefined; history = []; step = 0;
+    $('#lab-error').hidden = true; $('#loss-number').textContent = '—'; $('#loss-trend').textContent = 'Waiting to start';
+    $('#training-state').innerHTML = '<i></i> Ready to train';
+    $('#chart-caption').textContent = 'Set your experiment, then press Train network.';
+    $('#prediction-path').setAttribute('d', ''); $('#loss-path').setAttribute('d', '');
+    try { const config = settings(); drawCurves(config); drawNetwork(config); } catch (error) { showError(error); }
+    updateLabels();
+  });
+  root.querySelectorAll('[data-preset]').forEach((button) => button.addEventListener('click', () => {
+    controls.expression.value = button.getAttribute('data-preset') ?? '';
+    $('#reset-button').click();
+  }));
+  Object.values(controls).forEach((input) => input.addEventListener('input', () => {
+    updateLabels();
+    if (running) stop();
+    model = undefined; samples = undefined; step = 0; history = [];
+    $('#prediction-path').setAttribute('d', ''); $('#loss-path').setAttribute('d', '');
+    $('#loss-number').textContent = '—'; $('#loss-trend').textContent = 'Waiting to start';
+    $('#training-state').innerHTML = '<i></i> Ready to train';
+    try { $('#lab-error').hidden = true; const config = settings(); drawCurves(config); drawNetwork(config); } catch (error) { showError(error); }
+  }));
+  updateLabels();
+  try { const config = settings(); drawCurves(config); drawNetwork(config); } catch (error) { showError(error); }
+</script>

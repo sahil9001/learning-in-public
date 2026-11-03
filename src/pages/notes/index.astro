@@ -1,0 +1,10 @@
+---
+import { getCollection } from 'astro:content';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import NoteRow from '../../components/NoteRow.astro';
+const notes = (await getCollection('notes')).sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf());
+---
+<BaseLayout title="Notes / Sahil" description="A growing collection of learning notes across topics.">
+  <section class="page-heading wrap"><p class="eyebrow"><span class="eyebrow-line"></span>The journal</p><h1>Notes from<br /><em>the middle of learning.</em></h1><p>Short explanations, useful mistakes, and questions worth keeping. The collection will grow as the subjects do.</p></section>
+  <section class="notes-section wrap notes-page-list"><div class="notes-header"><div><p class="section-kicker">All entries</p><h2>Latest first</h2></div><span class="entry-count">{notes.length.toString().padStart(2, '0')} {notes.length === 1 ? 'entry' : 'entries'}</span></div><div class="note-list">{notes.map((note) => <NoteRow note={note} />)}</div></section>
+</BaseLayout>

@@ -1,0 +1,363 @@
+.lab-heading {
+  padding-top: 75px;
+  padding-bottom: 50px;
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 40px;
+}
+.lab-heading h1 {
+  font-size: clamp(55px, 6.5vw, 90px);
+  margin: 27px 0 0;
+}
+.lab-heading > p {
+  max-width: 350px;
+  margin: 0 0 10px;
+  color: #65766d;
+  font-size: 15px;
+  line-height: 1.7;
+}
+.lab-shell {
+  display: grid;
+  grid-template-columns: 360px 1fr;
+  gap: 18px;
+  align-items: start;
+}
+.lab-controls,
+.lab-results {
+  border: 1px solid #dce1d9;
+  background: #fdfcf8;
+}
+.lab-controls {
+  padding: 28px;
+}
+.panel-index {
+  color: #b87053;
+}
+.panel-heading h2,
+.results-top h2 {
+  font-size: 23px;
+  font-weight: 500;
+  letter-spacing: -0.05em;
+  margin: 12px 0 7px;
+}
+.panel-heading p {
+  font-size: 12px;
+  color: #78867e;
+  line-height: 1.6;
+  margin: 0 0 27px;
+}
+.control-group {
+  margin-bottom: 21px;
+}
+.control-group label {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  font-weight: 700;
+  margin-bottom: 10px;
+}
+.control-group label span,
+.control-group output {
+  font-family: "DM Mono", monospace;
+  font-weight: 400;
+  color: #b46b4e;
+}
+.control-group input[type="text"],
+.control-group input[type="number"] {
+  width: 100%;
+  background: #f7f7f1;
+  border: 1px solid #d7ddd4;
+  border-radius: 2px;
+  padding: 12px;
+  color: #24433d;
+  outline: none;
+}
+.control-group input:focus-visible {
+  outline: 2px solid #c6795b;
+  outline-offset: 2px;
+}
+.control-group input[type="text"] {
+  font-family: "DM Mono", monospace;
+  font-size: 13px;
+}
+.control-help {
+  font-size: 11px;
+  color: #89968c;
+  line-height: 1.5;
+  margin: 8px 0 0;
+}
+.preset-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 7px;
+  margin: 4px 0 24px;
+}
+.preset-row > span {
+  color: #8b988e;
+  font-size: 9px;
+  width: 100%;
+  margin-bottom: 3px;
+}
+.preset-row button {
+  border: 1px solid #d9ded5;
+  background: #f7f7f1;
+  padding: 7px 9px;
+  font-size: 10px;
+  color: #566d62;
+  border-radius: 2px;
+}
+.preset-row button:hover {
+  border-color: #b97458;
+  color: #b97458;
+}
+.control-pair {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+.panel-divider {
+  height: 1px;
+  background: #e4e8e0;
+  margin: 4px 0 27px;
+}
+.control-group input[type="range"] {
+  width: 100%;
+  height: 5px;
+  accent-color: #c27455;
+  cursor: pointer;
+}
+.control-actions {
+  display: flex;
+  gap: 9px;
+  margin-top: 31px;
+}
+.control-actions .button-primary {
+  flex: 1;
+  padding: 13px 14px;
+}
+.button-secondary {
+  border: 1px solid #d4ddd3;
+  background: transparent;
+  color: #416055;
+  font-size: 12px;
+  font-weight: 700;
+  border-radius: 3px;
+  padding: 0 15px;
+}
+.button-secondary:hover {
+  background: #edf1eb;
+}
+.lab-error {
+  background: #fbede8;
+  border-left: 3px solid #bd7054;
+  padding: 12px;
+  font-size: 12px;
+  line-height: 1.5;
+  color: #9b4f36;
+}
+.lab-results {
+  padding: 27px;
+}
+.results-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 25px;
+}
+.results-top h2 {
+  margin-bottom: 0;
+}
+.training-state {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  color: #728278;
+  font-size: 11px;
+}
+.training-state i {
+  height: 7px;
+  width: 7px;
+  border-radius: 50%;
+  background: #a1aba0;
+}
+.training-state.is-training i {
+  background: #c47757;
+  box-shadow: 0 0 0 5px #c4775726;
+  animation: pulse 1.3s infinite;
+}
+@keyframes pulse {
+  50% {
+    box-shadow: 0 0 0 9px #c4775709;
+  }
+}
+.chart-panel {
+  border: 1px solid #e0e5db;
+  background: #fafbf6;
+  padding: 24px 23px 14px;
+}
+.chart-heading {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 20px;
+}
+.chart-heading h3,
+.mini-heading h3 {
+  font-size: 15px;
+  margin: 0 0 6px;
+  font-weight: 700;
+}
+.chart-heading p {
+  font-size: 11px;
+  color: #87958a;
+  margin: 0;
+}
+.chart-legend {
+  display: flex;
+  gap: 15px;
+  font-size: 10px;
+  color: #66776d;
+  white-space: nowrap;
+}
+.chart-legend i {
+  width: 15px;
+  height: 2px;
+}
+.chart-panel svg {
+  width: 100%;
+  height: 310px;
+  margin-top: 17px;
+  overflow: visible;
+}
+.chart-grid path {
+  fill: none;
+  stroke: #e2e8dd;
+  stroke-width: 1;
+}
+.target-path,
+.prediction-path {
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.target-path {
+  stroke: #254740;
+  stroke-width: 3;
+}
+.prediction-path {
+  stroke: #c47857;
+  stroke-width: 3;
+}
+.chart-panel text {
+  font:
+    11px "DM Mono",
+    monospace;
+  fill: #9aa69a;
+}
+.chart-caption {
+  font-size: 11px;
+  color: #819085;
+  margin: 2px 0 0;
+  text-align: center;
+  min-height: 16px;
+}
+.results-bottom {
+  display: grid;
+  grid-template-columns: 1.25fr 0.85fr;
+  gap: 14px;
+  margin-top: 14px;
+}
+.network-panel,
+.loss-panel {
+  border: 1px solid #e0e5db;
+  background: #fafbf6;
+  padding: 18px 19px 16px;
+  min-height: 247px;
+}
+.mini-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: start;
+  gap: 8px;
+}
+.mini-heading span {
+  font:
+    9px "DM Mono",
+    monospace;
+  color: #87968a;
+  white-space: nowrap;
+}
+.network-panel svg {
+  width: 100%;
+  height: 170px;
+  margin-top: 4px;
+}
+.network-panel p {
+  font-size: 10px;
+  color: #94a095;
+  margin: 0;
+}
+.loss-panel strong {
+  display: block;
+  font-size: 36px;
+  font-weight: 500;
+  letter-spacing: -0.06em;
+  margin-top: 34px;
+}
+.loss-panel svg {
+  width: 100%;
+  height: 72px;
+  margin-top: 0;
+}
+.loss-panel svg path {
+  stroke: #c67959;
+  stroke-width: 2.5;
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.loss-footer {
+  display: flex;
+  justify-content: space-between;
+  font-size: 10px;
+  color: #89968b;
+}
+.lab-explainer {
+  display: grid;
+  grid-template-columns: 0.8fr 2fr;
+  gap: 90px;
+  padding-top: 110px;
+  padding-bottom: 120px;
+}
+.lab-explainer h2 {
+  font-size: 42px;
+}
+.explainer-steps {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 28px;
+}
+.explainer-steps > div {
+  border-top: 1px solid #ccd7cd;
+  padding-top: 20px;
+}
+.explainer-steps span {
+  font:
+    11px "DM Mono",
+    monospace;
+  color: #b97356;
+}
+.explainer-steps h3 {
+  font-size: 18px;
+  font-weight: 600;
+  letter-spacing: -0.04em;
+  margin: 20px 0 8px;
+}
+.explainer-steps p {
+  font-size: 12px;
+  line-height: 1.7;
+  color: #78877d;
+  margin: 0;
+}

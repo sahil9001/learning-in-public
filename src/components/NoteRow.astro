@@ -1,0 +1,9 @@
+---
+const { note } = Astro.props;
+const base = `${import.meta.env.BASE_URL.replace(/\/$/, '')}/`;
+const date = note.data.date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC' });
+---
+<a class="note-row" href={`${base}notes/${note.id}/`}>
+  <div class="note-row-main"><span class="note-topic">{note.data.topic}</span><h3>{note.data.title}</h3><p>{note.data.summary}</p></div>
+  <div class="note-row-meta"><span>{date}</span><span>{note.data.readingTime}</span><span class="note-row-arrow" aria-hidden="true">↗</span></div>
+</a>

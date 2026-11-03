@@ -1,0 +1,16 @@
+---
+import { getCollection, render } from 'astro:content';
+import type { CollectionEntry } from 'astro:content';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+interface Props { note: CollectionEntry<'notes'>; }
+export async function getStaticPaths() {
+  return (await getCollection('notes')).map((note) => ({ params: { slug: note.id }, props: { note } }));
+}
+const { note } = Astro.props;
+const { Content } = await render(note);
+const base = `${import.meta.env.BASE_URL.replace(/\/$/, '')}/`;
+const date = note.data.date.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric', timeZone: 'UTC' });
+---
+<BaseLayout title={`${note.data.title} / Sahil`} description={note.data.summary}>
+  <article class="article wrap"><a class="back-link" href={`${base}notes/`}>← All notes</a><div class="article-head"><div class="article-meta"><span>{note.data.topic}</span><span>{note.data.status}</span><span>{date}</span></div><h1>{note.data.title}</h1><p>{note.data.summary}</p><span class="reading-time">{note.data.readingTime}</span></div><div class="article-body"><Content /></div><div class="article-end"><span>Still learning. More to come.</span><a href={`${base}lab/`}>Try the interactive lab →</a></div></article>
+</BaseLayout>
