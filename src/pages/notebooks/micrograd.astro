@@ -1,0 +1,46 @@
+---
+import { readFileSync } from 'node:fs';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import '../../styles/notebook.css';
+
+const base = `${import.meta.env.BASE_URL.replace(/\/$/, '')}/`;
+const notebook = JSON.parse(readFileSync(new URL('../../../public/notebooks/micrograd_from_scratch.ipynb', import.meta.url), 'utf8'));
+const sourceText = (value: string | string[] = '') => Array.isArray(value) ? value.join('') : value;
+const outputText = (output: Record<string, any>) => {
+  const data = output.data ?? {};
+  const text = data['text/plain'];
+  return Array.isArray(text) ? text.join('') : text;
+};
+---
+
+<BaseLayout title="Micrograd notebook / Sahil" description="The complete Jupyter notebook behind my micrograd learning notes, readable in the browser and available to download.">
+  <article class="notebook-page wrap">
+    <a class="back-link" href={`${base}notes/starting-with-micrograd/`}>← Starting with micrograd</a>
+    <header class="notebook-heading">
+      <p class="section-kicker">JUPYTER NOTEBOOK · 26 CELLS</p>
+      <h1>Micrograd,<br /><em>from scratch.</em></h1>
+      <p>The original notebook, with its code and saved outputs, lives here on the site. Read through it below or download the <code>.ipynb</code> to run it in Jupyter.</p>
+      <div class="notebook-actions">
+        <a class="button-primary" href={`${base}notebooks/micrograd_from_scratch.ipynb`} download="micrograd_from_scratch.ipynb">Download notebook ↓</a>
+        <a class="text-link" href="https://colab.research.google.com/drive/1jlF4JoM39M4RcGP04sYwcRpVe1Qud9tA" target="_blank" rel="noopener noreferrer">Open in Colab ↗</a>
+      </div>
+    </header>
+    <section class="notebook-cells" aria-label="Notebook cells">
+      {notebook.cells.map((cell: Record<string, any>, index: number) => (
+        <article class="notebook-cell">
+          <div class="cell-prompt" aria-label={`Cell ${index + 1}`}><span>IN [{cell.execution_count ?? ' '}]:</span></div>
+          <pre class="cell-code"><code>{sourceText(cell.source)}</code></pre>
+          {cell.outputs?.map((output: Record<string, any>) => (
+            <div class="cell-output">
+              {output.output_type === 'stream' && <pre>{sourceText(output.text)}</pre>}
+              {output.output_type === 'error' && <pre class="cell-error">{[output.ename, output.evalue, ...(output.traceback ?? [])].join('\n')}</pre>}
+              {output.output_type !== 'error' && outputText(output) && <pre>{outputText(output)}</pre>}
+              {output.data?.['image/png'] && <img src={`data:image/png;base64,${sourceText(output.data['image/png'])}`} alt={`Output from notebook cell ${index + 1}`} loading="lazy" />}
+              {output.data?.['image/jpeg'] && <img src={`data:image/jpeg;base64,${sourceText(output.data['image/jpeg'])}`} alt={`Output from notebook cell ${index + 1}`} loading="lazy" />}
+            </div>
+          ))}
+        </article>
+      ))}
+    </section>
+  </article>
+</BaseLayout>

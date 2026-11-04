@@ -13,7 +13,7 @@ I'm learning neural networks from the ground up through [Andrej Karpathy's micro
 
 How can a network tell which weights to change when its prediction is wrong? The lecture approaches that question with ordinary scalar arithmetic, then builds a small engine that remembers how a result was calculated.
 
-In [my Colab notebook](https://colab.research.google.com/drive/1jlF4JoM39M4RcGP04sYwcRpVe1Qud9tA), I start with a quadratic:
+In [the notebook on this site](../../notebooks/micrograd/), I start with a quadratic. You can read the full notebook here or [download the original Jupyter file](../../notebooks/micrograd_from_scratch.ipynb). The [Colab copy](https://colab.research.google.com/drive/1jlF4JoM39M4RcGP04sYwcRpVe1Qud9tA) is still available too. I start with:
 
 ```python
 def f(x):
