@@ -27,6 +27,11 @@ This notebook takes the next step: it uses the **previous three characters**. Fo
 
 The model is a small character-level neural language model, rather than a bigram model. The wider context lets it make different predictions for the same last character depending on what came before it.
 
+<figure class="article-figure">
+  <img src="../../images/context-three-prediction.png" alt="Three context characters, dot, e, and m, become embedding vectors that feed a neural network; the model assigns the highest illustrated probability to m as the next character." width="1752" height="897" loading="lazy" />
+  <figcaption>A simplified view of the prediction. The notebook uses 10-dimensional embeddings and scores every character in its vocabulary; the illustration shows a few dimensions and possible outputs.</figcaption>
+</figure>
+
 ## Turning characters into model inputs
 
 I load the public [makemore names dataset](https://github.com/karpathy/makemore/blob/master/names.txt), map each character to an integer, and reserve index `0` for `.`. A context is therefore a three-integer tensor. The notebook splits whole names into training, development, and test sets before building examples, so examples from one name do not land in different splits.
