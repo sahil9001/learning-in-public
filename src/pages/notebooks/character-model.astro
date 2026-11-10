@@ -1,0 +1,35 @@
+---
+import { readFileSync } from 'node:fs';
+import { marked } from 'marked';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import '../../styles/notebook.css';
+
+const base = `${import.meta.env.BASE_URL.replace(/\/$/, '')}/`;
+const notebook = JSON.parse(readFileSync(new URL('../../../public/notebooks/character_model.ipynb', import.meta.url), 'utf8'));
+const sourceText = (value: string | string[] = '') => Array.isArray(value) ? value.join('') : value;
+---
+
+<BaseLayout title="Character model notebook / Sahil" description="A character-level neural language model that predicts from three previous characters, with the full notebook and a Colab link.">
+  <article class="notebook-page wrap">
+    <a class="back-link" href={`${base}notes/from-bigrams-to-three-character-context/`}>← Read the learning note</a>
+    <header class="notebook-heading">
+      <p class="section-kicker">JUPYTER NOTEBOOK · {notebook.cells.length} CELLS</p>
+      <h1>Predicting the<br /><em>next character.</em></h1>
+      <p>A small neural language model trained on names with a context of three characters. Read the code here, download the notebook, or run it in Colab. The training outputs are generated when you run it.</p>
+      <div class="notebook-actions">
+        <a class="button-primary" href={`${base}notebooks/character_model.ipynb`} download="character_model.ipynb">Download notebook ↓</a>
+        <a class="text-link" href="https://colab.research.google.com/drive/1q_kgY_3X28sdhLr0zyheT8AiXRnyB3-S" target="_blank" rel="noopener noreferrer">Open in Colab ↗</a>
+      </div>
+    </header>
+    <section class="notebook-cells" aria-label="Notebook cells">
+      {notebook.cells.map((cell: { cell_type: string; source: string | string[] }, index: number) => (
+        <article class:list={['notebook-cell', { 'notebook-markdown-cell': cell.cell_type === 'markdown' }]}>
+          <div class="cell-prompt" aria-label={`Cell ${index + 1}`}><span>{cell.cell_type === 'markdown' ? 'NOTE' : 'CODE'}</span></div>
+          {cell.cell_type === 'markdown'
+            ? <div class="cell-markdown" set:html={marked.parse(sourceText(cell.source))} />
+            : <pre class="cell-code"><code>{sourceText(cell.source)}</code></pre>}
+        </article>
+      ))}
+    </section>
+  </article>
+</BaseLayout>
